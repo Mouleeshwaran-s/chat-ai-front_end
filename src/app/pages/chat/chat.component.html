@@ -1,0 +1,9 @@
+<!-- chat.component.html -->
+<div>
+  <input #promptInput type="text" placeholder="Ask something..." />
+  <button (click)="startStreaming(promptInput.value)">Send</button>
+</div>
+
+<div class="chat-stream">
+  <p>{{ responseText }}</p>
+</div>

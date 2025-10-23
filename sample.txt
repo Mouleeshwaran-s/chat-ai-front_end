@@ -1,0 +1,37 @@
+Scenorio 1:
+
+In Agent table (tbl_agent) we have list of agents
+For example 10 agents
+In those 10 agtens, We have five agents regarding to SOP generator(a1, a2, a3, a4 ,a5) other(a6 ,a7 ,a8, a9 ,a10) are regarding other thing.
+
+In Team table (tbl_team) we have list of teams
+For example 2 teams
+In those one is for image creation and other for video creation
+
+
+If I am goint to create workflow for SOP Generation
+Ouput sholud be list of sugessted list of agents from teams
+
+Ouput 1:
+teamName:SOP Generator Team
+agentList
+    a1,a2,a3,a4,a5
+
+Scenorio 2:
+
+In Agent table (tbl_agent) we have list of agents
+For example 10 agents
+In those 10 agtens, We have five agents regarding to SOP generator(a1, a2, a3, a6 ,a7) other(a4 ,a5 ,a8, a9 ,a10) are regarding other thing.
+
+In Team table (tbl_team) we have list of teams
+For example 2 teams
+In those one is for SOP Generator and other for video creation
+
+
+If I am goint to create workflow for SOP Generation
+Ouput sholud be list of sugessted list of agents from teams which already available in team
+
+Ouput 1:
+teamName:SOP Generator Team
+agentList
+    a1,a2,a3,a6,a7

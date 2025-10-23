@@ -1,0 +1,276 @@
+/* Sidebar Styles for Chat-AI Application */
+
+/* SVG icon coloring */
+nav svg path {
+  fill: var(--text-clr) !important;
+}
+
+/* Sidebar navigation container */
+nav {
+  display: flex;
+  flex-direction: column;
+  font-family: "Inter";
+}
+
+/* Sidebar header styling */
+header {
+  padding: 0.5em;
+  border-bottom: 1px solid var(--line-clr);
+  display: flex;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  gap: 0.5em;
+}
+
+/* Top bar controls (logo and toggle button) */
+.bar-control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Sidebar toggle button */
+.sidebar-btn {
+  border: none;
+  border-radius: 0.5em;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5em;
+}
+
+/* App name styling */
+.app-name {
+  color: var(--text-clr);
+  padding: 0.5em;
+}
+
+/* Sidebar main container */
+#sidebar {
+  box-sizing: border-box;
+  height: 100vh;
+  width: 250px;
+  background-color: var(--sidebar-clr);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  transition: width 150ms ease-in-out, padding 150ms ease-in-out;
+  overflow: hidden;
+  text-wrap: nowrap;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar collapsed state */
+#sidebar.close {
+  padding: 0;
+  width: 50px;
+  position: sticky;
+  justify-content: space-between;
+}
+#sidebar.isOverlay {
+  position: fixed;
+}
+
+/* Sidebar navigation list */
+#sidebar ul {
+  flex: 1;
+  display: block;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-clr) transparent;
+}
+
+/* Sidebar navigation list items */
+#sidebar ul li {
+  padding: 0.5em;
+}
+
+/* Sidebar links */
+#sidebar a {
+  border-radius: 0.5em;
+  padding: 0.7em 0.5em;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-clr);
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+/* Sidebar link text and dropdown text truncation */
+#sidebar a span,
+#sidebar .dropdown-btn span {
+  flex-grow: 1;
+  font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* Sidebar link hover state */
+#sidebar a:hover {
+  background-color: var(--sidebar-hover-hrt);
+}
+
+/* Active sidebar link */
+.isActive {
+  background-color: var(--sidebar-hover-hrt) !important;
+}
+
+/* Sidebar toggle button hover */
+#toggle-btn:hover {
+  background-color: var(--sidebar-hover-clr);
+}
+
+/* Action bar for new chat and other actions */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  width: 100%;
+}
+
+/* Action bar button styling */
+.action-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start !important;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  gap: 0.5em;
+  width: 100%;
+}
+
+/* Action text styling */
+.action-text {
+  font-size: 12px;
+  color: var(--text-clr);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* Action bar button hover */
+.action-bar button:hover {
+  background-color: var(--sidebar-hover-clr);
+}
+
+/* Action bar SVG icon coloring */
+.action-bar svg path {
+  fill: var(--text-clr) !important;
+}
+
+/* Sidebar SVG icon coloring override */
+.sidebar svg path {
+  fill: #ffffff !important;
+}
+
+/* Sidebar footer styling */
+footer {
+  color: var(--text-clr) !important;
+  padding: 0.5em;
+  border-top: 1px solid var(--line-clr);
+}
+
+/* User account button styling */
+.user-account {
+  border-top: 1px solid var(--line-clr);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  color: var(--text-clr) !important;
+}
+
+/* User account button hover */
+.user-account:hover {
+  background-color: var(--sidebar-hover-clr);
+}
+
+/* User short avatar styling */
+.user-short {
+  color: var(--line-clr) !important;
+  background-color: var(--secondary-text-clr);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: small;
+}
+
+/* Active user short avatar */
+.user-short-active {
+  width: 20px;
+  height: 20px;
+  font-size: smaller;
+}
+
+#sidebar.isOverlay {
+  /* position: fixed; */
+}
+
+/* Responsive styles for mobile and tablets */
+@media (max-width: 480px) {
+  #sidebar {
+    width: 100%;
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  #sidebar.close {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  #sidebar ul {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 767px) {
+  #sidebar {
+    /* position: fixed; */
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Tablet and desktop breakpoints (reserved for future use) */
+@media (min-width: 768px) and (max-width: 1024px) {
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+}
+
+@media (min-width: 1441px) {
+}

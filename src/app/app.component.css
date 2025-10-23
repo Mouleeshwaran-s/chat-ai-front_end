@@ -1,0 +1,8 @@
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--sidebar-clr);
+  color: var(--text-clr);
+  display: grid;
+  grid-template-columns: auto 1fr;
+}

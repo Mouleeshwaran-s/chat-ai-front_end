@@ -1,0 +1,152 @@
+/* You can add global styles to this file, and also import other style files */
+@import "prismjs/themes/prism-tomorrow.css";
+@import "prismjs/plugins/line-numbers/prism-line-numbers.css";
+@import "prismjs/plugins/line-highlight/prism-line-highlight.css";
+
+:root {
+  --sidebar-clr: #181818;
+  --main-clr: #212121;
+  --line-clr: #42434a;
+  --hover-clr: #222533;
+  --sidebar-hover-clr: #ffffff26;
+  --sidebar-hover-hrt: #212121;
+  --text-clr: #ffffff;
+  --accent-clr: #5e63ff;
+  --secondary-text-clr: #b0b3c1;
+  --width-per: 10%; /* Default for mobile */
+}
+
+/* Tablet & up */
+@media (min-width: 480px) {
+  :root {
+    --width-per: 25%;
+  }
+}
+/* Desktop & up */
+@media (min-width: 1024px) {
+  :root {
+    --width-per: 46%;
+  }
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url(../public/assets/fonts/Inter/Inter-VariableFont.ttf)
+    format("truetype");
+}
+html,
+body {
+  background-color: var(--main-clr) !important;
+}
+body {
+  font-family: "Inter" !important;
+  margin: 0px !important;
+}
+input {
+  outline: none;
+}
+input:hover {
+  /* border: 1px solid #8de4bd !important; */
+}
+input::placeholder {
+  color: #a0a0a0;
+  font-size: 10px !important;
+}
+input {
+  font-size: 12px !important;
+}
+.type mat-label {
+  color: #f9f9f9 !important;
+}
+.type path {
+  color: #f9f9f9 !important;
+}
+.type .mat-mdc-select-value-text {
+  color: #f9f9f9 !important;
+}
+.mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__trailing {
+  border-color: #f9f9f9 !important;
+}
+/* .mdc-text-field--invalid:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__leading,
+.mdc-text-field--invalid:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__notch,
+.mdc-text-field--invalid:not(.mdc-text-field--disabled)
+  .mdc-notched-outline__trailing {
+  border-color: #f44336 !important;
+} */
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline
+  .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline
+  .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-notched-outline
+  .mdc-notched-outline__trailing {
+  border-width: 1px !important;
+}
+
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(
+    .mdc-text-field--focused
+  ):hover
+  .mdc-notched-outline
+  .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(
+    .mdc-text-field--focused
+  ):hover
+  .mdc-notched-outline
+  .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(
+    .mdc-text-field--focused
+  ):hover
+  .mdc-notched-outline
+  .mdc-notched-outline__trailing {
+  border-color: #f9f9f9 !important;
+}
+
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused
+  .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused
+  .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--focused
+  .mdc-notched-outline__trailing {
+  border-color: #f9f9f9 !important;
+}
+app-chat-ai {
+  height: 100vh !important;
+}
+::selection {
+  color: #f9f9f9;
+  background-color: #697f67a4;
+}
+button.markdown-clipboard-button {
+  padding: 3px 8px;
+  background-color: #ccc;
+  border: 1px solid;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+}
+pre {
+  border-radius: 8px !important;
+  font-size: clamp(8px, 2vw, 12px) !important;
+  background: #1a1b1f !important;
+
+  /* width: calc(100vw - 200px) !important; */
+}
+markdown h3 {
+  font-size: clamp(8px, 2vw, 12px) !important;
+}
+/* psql -h localhost -U admin -d chatai */
+button {
+  outline: none !important;
+}
