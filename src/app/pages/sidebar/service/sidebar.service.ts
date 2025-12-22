@@ -17,6 +17,11 @@ export class SidebarService {
     const headers = this.getHeaderWithAuth();
     return this.http.get(url, { headers });
   }
+  getAllRagHistoryTitle(): Observable<any> {
+    const url = `${this.API_URL}/ragHistory/titles`;
+    const headers = this.getHeaderWithAuth();
+    return this.http.get(url, { headers });
+  }
   getHeaderWithAuth(): HttpHeaders {
     const token = localStorage.getItem('access_token');
     return new HttpHeaders({

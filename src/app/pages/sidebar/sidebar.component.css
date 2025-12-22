@@ -140,6 +140,7 @@ header {
   align-items: center;
   gap: 1em;
   width: 100%;
+  flex-direction: column;
 }
 
 /* Action bar button styling */
@@ -178,9 +179,26 @@ header {
   fill: var(--text-clr) !important;
 }
 
+/* RAG Agent button styling */
+/* .rag-agent-btn {
+  background-color: rgba(74, 144, 226, 0.1) !important;
+  border: 1px solid rgba(74, 144, 226, 0.3) !important;
+} */
+
+.rag-agent-btn:hover {
+  background-color: rgba(74, 144, 226, 0.2) !important;
+}
+
+.rag-agent-btn svg path {
+  /* fill: #4a90e2 !important; */
+}
+
 /* Sidebar SVG icon coloring override */
 .sidebar svg path {
   fill: #ffffff !important;
+}
+.chat-svg g path{
+  fill: none !important;
 }
 
 /* Sidebar footer styling */
@@ -208,6 +226,35 @@ footer {
 /* User account button hover */
 .user-account:hover {
   background-color: var(--sidebar-hover-clr);
+}
+
+/* User info container */
+.user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: 0.5em;
+}
+
+.user-text {
+  flex: 1;
+  text-align: left;
+}
+
+/* Logout icon */
+.logout-icon {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.user-account:hover .logout-icon {
+  opacity: 1;
+}
+
+.logout-icon path {
+  stroke: var(--text-clr);
 }
 
 /* User short avatar styling */

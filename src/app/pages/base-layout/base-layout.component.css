@@ -1,0 +1,13 @@
+.chat-ai-container {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--sidebar-clr);
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+.wrapper {
+  height: 100vh !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}

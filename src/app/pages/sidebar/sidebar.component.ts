@@ -1,9 +1,10 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { SharedService } from '../../core/service/shared.service';
 import { SidebarService } from './service/sidebar.service';
 import { CommonModule } from '@angular/common';
-import { CdkAutofill } from "@angular/cdk/text-field";
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../core/service/auth.service';
 
 // Interface for chat history items
 interface ChatHistoryTitle {
@@ -18,10 +19,9 @@ interface ChatHistoryTitle {
   imports: [
     CommonModule,
     RouterModule,
-    CdkAutofill
   ],
 })
-export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   title = 'chatAI';
   userName: string = '';
   sidebarClosed = false; // Tracks sidebar open/close state
@@ -30,12 +30,16 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
   activeSessionId: string = ''; // Currently active chat session
   isOverlay: boolean = false; // Determines if sidebar is in overlay mode
   isMobileView: boolean = false; // Tracks if the view is mobile-sized
+  isChatActive: boolean = true; // Tracks if chat is currently active
+  lastSegment: string = '';
+  private subscriptions: Subscription = new Subscription();
 
   constructor(
     private service: SidebarService,
     private sharedService: SharedService,
     private router: Router,
-    private ctr: ChangeDetectorRef
+    private ctr: ChangeDetectorRef,
+    private authService: AuthService
   ) { }
   ngAfterViewChecked(): void {
     // if (window.innerWidth < 768) {
@@ -44,6 +48,12 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
     //   this.isOverlay = false;
     // }
     // this.ctr.detectChanges();
+    const pathSegments = this.router.url.split('/');
+    console.log('Path Segments:', pathSegments);
+    // get last index
+    this.lastSegment = pathSegments[pathSegments.length - 1];
+    console.log("last Segment", this.lastSegment);
+
   }
 
   /**
@@ -57,23 +67,40 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
     this.getCurrentUsername();
 
     // Subscribe to sidebar toggle events
-    this.sharedService.sidebarToggle$.subscribe(() => this.toggleSidebar());
+    this.subscriptions.add(
+      this.sharedService.sidebarToggle$.subscribe(() => this.toggleSidebar())
+    );
 
     // Subscribe to chat history update events
-    this.sharedService.sidebarChatHistoryUpdate$.subscribe(() => this.getAllChatHistoryTitle());
+    this.subscriptions.add(
+      this.sharedService.sidebarChatHistoryUpdate$.subscribe(() => this.getAllChatHistoryTitle())
+    );
+
+    // Subscribe to component switch events to keep isChatActive in sync
+    this.subscriptions.add(
+      this.sharedService.componentSwitch$.subscribe((isChatActive: boolean) => {
+        this.isChatActive = isChatActive;
+        this.ctr.detectChanges();
+      })
+    );
 
     // Initial fetch of chat history
     this.getAllChatHistoryTitle();
 
-    this.sharedService.sidebarChatHistoryUpdate$.subscribe(() => {
-      this.getAllChatHistoryTitle();
-    });
+    // Set initial state based on current route
+    this.updateChatActiveBasedOnRoute();
+
     this.isMobileView = window.innerWidth < 768;
   }
 
   ngAfterViewInit(): void {
     // Ensure overlay mode is correct after view initializes
     this.updateOverlayMode();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up all subscriptions to prevent memory leaks
+    this.subscriptions.unsubscribe();
   }
 
   /**
@@ -90,6 +117,18 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
    */
   private updateOverlayMode(): void {
     this.isOverlay = window.innerWidth < 768;
+  }
+
+  /**
+   * Updates the isChatActive property based on the current route.
+   */
+  private updateChatActiveBasedOnRoute(): void {
+    const currentUrl = this.router.url;
+    if (currentUrl.includes('/rag')) {
+      this.isChatActive = false;
+    } else if (currentUrl.includes('/chat')) {
+      this.isChatActive = true;
+    }
   }
 
   /**
@@ -112,26 +151,52 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
    * Fetches all chat history titles and updates the active session based on the current route.
    */
   getAllChatHistoryTitle(): void {
-    this.service.getAllChatHistoryTitle().subscribe({
-      next: (history: any[]) => {
-        // Clear previous history to avoid duplicates
-        this.chatHistory = [];
-        // Populate chat history
-        history.forEach(item => {
-          this.chatHistory.push({ sessionId: item.sessionId, title: item.title });
-        });
+    console.log("Last segment: ",this.lastSegment);
+    
+    if (this.lastSegment = 'chat') {
+      this.service.getAllChatHistoryTitle().subscribe({
+        next: (history: any[]) => {
+          // Clear previous history to avoid duplicates
+          this.chatHistory = [];
+          // Populate chat history
+          history.forEach(item => {
+            this.chatHistory.push({ sessionId: item.sessionId, title: item.title });
+          });
 
-        // Determine active session from the current route
-        const pathSegments = this.router.url.split('/');
-        const lastSegment = pathSegments[pathSegments.length - 1];
-        this.activeSessionId = lastSegment;
-      },
-      error: (error) => {
-        // Handle errors gracefully
-        console.error('Error fetching chat history:', error);
-        this.chatHistory = [];
-      }
-    });
+          // Determine active session from the current route
+          const pathSegments = this.router.url.split('/');
+          const lastSegment = pathSegments[pathSegments.length - 1];
+          this.activeSessionId = lastSegment;
+        },
+        error: (error) => {
+          // Handle errors gracefully
+          console.error('Error fetching chat history:', error);
+          this.chatHistory = [];
+        }
+      });
+    } else if (this.lastSegment = 'rag') {
+
+      this.service.getAllRagHistoryTitle().subscribe({
+        next: (history: any[]) => {
+          // Clear previous history to avoid duplicates
+          this.chatHistory = [];
+          // Populate chat history
+          history.forEach(item => {
+            this.chatHistory.push({ sessionId: item.sessionId, title: item.title });
+          });
+
+          // Determine active session from the current route
+          const pathSegments = this.router.url.split('/');
+          const lastSegment = pathSegments[pathSegments.length - 1];
+          this.activeSessionId = lastSegment;
+        },
+        error: (error) => {
+          // Handle errors gracefully
+          console.error('Error fetching chat history:', error);
+          this.chatHistory = [];
+        }
+      });
+    }
   }
 
   /**
@@ -151,7 +216,45 @@ export class SidebarComponent implements OnInit, AfterViewInit, AfterViewChecked
   createNewChat(): void {
     this.activeSessionId = '';
 
+    // Trigger component switch to Chat-AI
+    // this.sharedService.triggerComponentSwitch(true);
     this.sharedService.triggerCreateNewChat();
+  }
+
+  createNewChatSession(): void {
+    this.activeSessionId = '';
+
+    // Navigate to chat
+    this.router.navigate(['/chat']);
+
+    // Trigger component switch to Chat-AI
+    this.sharedService.triggerComponentSwitch(true);
+
+    // Close sidebar on mobile
+    if (this.isMobileView || window.innerWidth < 768) {
+      this.sidebarClosed = true;
+      this.showSidebarContent = false;
+      localStorage.setItem('sidebarClosed', 'true');
+    }
+    this.ctr.detectChanges();
+  }
+
+  createNewRagSession(): void {
+    this.activeSessionId = '';
+
+    // Navigate to RAG agent
+    this.router.navigate(['/rag']);
+
+    // Trigger component switch to RAG agent
+    this.sharedService.triggerComponentSwitch(false);
+
+    // Close sidebar on mobile
+    if (this.isMobileView || window.innerWidth < 768) {
+      this.sidebarClosed = true;
+      this.showSidebarContent = false;
+      localStorage.setItem('sidebarClosed', 'true');
+    }
+    this.ctr.detectChanges();
   }
 
   getCurrentUsername() {

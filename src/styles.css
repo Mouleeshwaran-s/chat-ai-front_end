@@ -144,9 +144,28 @@ pre {
   /* width: calc(100vw - 200px) !important; */
 }
 markdown h3 {
-  font-size: clamp(8px, 2vw, 12px) !important;
+  /* font-size: clamp(8px, 2vw, 12px) !important; */
 }
 /* psql -h localhost -U admin -d chatai */
 button {
   outline: none !important;
+}
+code{
+  background: rgb(66, 66, 66);
+  color: #fff;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace !important;
+  padding: .15rem .3rem;
+  font-weight: 100 !important;
+  font-size: clamp(8px, 2vw, 12px) !important;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  -ms-border-radius: 4px;
+  -o-border-radius: 4px;
+}
+markdown ul{
+  padding-left: 20px;
+}
+markdown a{
+  color: #fff;
 }

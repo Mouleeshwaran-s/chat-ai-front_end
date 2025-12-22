@@ -112,9 +112,31 @@ export class AuthService {
     isAuthenticatedUser(): boolean {
         return this.isAuthenticated;
     }
-    logout(): void {
-        this.clearTokens();
-        this.router.navigate(['/login']);
+
+    logout(): Observable<any> {
+        const refreshToken = this.getRefreshToken();
+        const accessToken = this.getAccessToken();
+
+        if (!refreshToken) {
+            this.clearTokens();
+            this.router.navigate(['/login']);
+            return new Observable(observer => {
+                observer.next({ msg: 'Logged out locally' });
+                observer.complete();
+            });
+        }
+
+        const headers = new HttpHeaders({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+        });
+
+        return this.https.post(`${this.API_BASE_URL}/logout`, { refreshToken }, { headers }).pipe(
+            tap(() => {
+                this.clearTokens();
+                this.router.navigate(['/login']);
+            })
+        );
     }
 
     /** -----------------------------

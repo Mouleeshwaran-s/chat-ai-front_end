@@ -1,0 +1,153 @@
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal content container */
+.modal-content {
+  background-color: var(--sidebar-clr);
+  border-radius: 12px;
+  padding: 0;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  border: 1px solid var(--line-clr);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5em;
+  border-bottom: 1px solid var(--line-clr);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-clr);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Close button */
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-clr);
+  cursor: pointer;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: var(--sidebar-hover-clr);
+}
+
+/* Modal body */
+.modal-body {
+  padding: 1.5em;
+}
+
+.modal-body p {
+  margin: 0;
+  color: var(--secondary-text-clr);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Modal footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75em;
+  padding: 1em 1.5em;
+  border-top: 1px solid var(--line-clr);
+}
+
+/* Buttons */
+.btn {
+  padding: 0.65em 1.5em;
+  border: none;
+  border-radius: 0.5em;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Inter", sans-serif;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: var(--text-clr);
+  border: 1px solid var(--line-clr);
+}
+
+.btn-cancel:hover {
+  background-color: var(--sidebar-hover-clr);
+}
+
+.btn-confirm {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background-color: #c82333;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .modal-content {
+    width: 95%;
+    margin: 1em;
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .modal-body p {
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    padding: 0.6em 1.2em;
+    font-size: 0.9rem;
+  }
+}

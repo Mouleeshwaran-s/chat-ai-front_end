@@ -50,7 +50,18 @@
           </span>
         </button>
       </div>
-      <button type="submit" (click)="onSubmit()" class="signup-button signup-button-primary">Sign Up</button>
+      <button type="submit" (click)="onSubmit()" class="signup-button signup-button-primary" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Sign Up</span>
+        <span *ngIf="isLoading" class="loading-content">
+          <svg class="spinner" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="32">
+              <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+              <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          Creating Account...
+        </span>
+      </button>
     </form>
     <div class="signup-links">
       <a routerLink="/login" class="signup-link">Already have an account?</a>

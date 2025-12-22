@@ -4,7 +4,7 @@ import { SharedService } from './core/service/shared.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule,],
+  imports: [RouterModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

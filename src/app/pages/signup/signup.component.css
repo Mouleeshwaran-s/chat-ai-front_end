@@ -81,6 +81,25 @@ form {
   background: #d1d5db;
 }
 
+.signup-button:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  color: #888;
+}
+
 .signup-links {
   display: flex;
   justify-content: center;

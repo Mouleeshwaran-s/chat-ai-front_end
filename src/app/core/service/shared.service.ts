@@ -54,6 +54,13 @@ export class SharedService {
   triggerSessionSelected(sessionId: string) {
     this.sessionSelectedSource.next(sessionId);
   }
+
+  private componentSwitchSource = new Subject<boolean>();
+  componentSwitch$ = this.componentSwitchSource.asObservable();
+
+  triggerComponentSwitch(isChatActive: boolean) {
+    this.componentSwitchSource.next(isChatActive);
+  }
   // Chat AI Service
   private baseAPIUrl = environment.apiUrl
   private apiUrl = `${this.baseAPIUrl}/api`;

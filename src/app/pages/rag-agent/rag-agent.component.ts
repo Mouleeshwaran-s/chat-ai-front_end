@@ -14,13 +14,10 @@ import {
 import { FormControl, FormsModule, Validators } from '@angular/forms';
 import { MaterialModule } from '../../core/modules/material/material.module';
 import { CommonModule } from '@angular/common';
-import { saveAs } from 'file-saver';
 import { MarkdownModule } from 'ngx-markdown';
-import { marked } from 'marked';
-import { ChatAiService } from './service/chat-ai.service';
+// import { ChatAiService } from './service/chat-ai.service';
 import { Router } from '@angular/router';
 import { SharedService } from '../../core/service/shared.service';
-import * as mammoth from 'mammoth';
 import { models } from '../../core/models/ai-models';
 import { SnowflakeIdGenerator } from '../../core/service/snowflake-id-generator';
 import { Location } from '@angular/common';
@@ -48,35 +45,40 @@ export interface MessagePayload {
   role: string;
   content: string;
   isText: boolean;
-  isImage: boolean;
+  isFile: boolean;
   date_time: string;
 }
+import { RagService } from './service/rag.service';
+
 @Component({
-  selector: 'app-chat-ai',
+  selector: 'app-rag-agent',
   standalone: true,
   imports: [
     MaterialModule,
     CommonModule,
     MarkdownModule,
-    FormsModule
+    FormsModule,
   ],
-  templateUrl: './chat-ai.component.html',
-  styleUrl: './chat-ai.component.css'
+  templateUrl: './rag-agent.component.html',
+  styleUrl: './rag-agent.component.css'
 })
-export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked, OnDestroy {
+export class RagAgentComponent implements AfterViewInit, OnInit, AfterViewChecked, OnDestroy {
   // ViewChilds
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
   @ViewChild('autoTextarea') autoTextarea!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('uploadBox') uploadBox!: ElementRef<HTMLDivElement>;
 
   // Outputs
   @Output() sidebarToggle = new EventEmitter<void>();
 
   // UI State
+  isRagInitialState = true;
   isSidebarVisible = true;
   isUserAtBottom = true;
   isProgress = false;
   isTyping = false;
+  isDragOver = false;
 
   // Data
   private snowflake: SnowflakeIdGenerator;
@@ -99,7 +101,7 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
   eventSource: EventSource | null = null;
 
   constructor(
-    private chatAIService: ChatAiService,
+    private ragService: RagService,
     private router: Router,
     private sharedService: SharedService,
     private cdr: ChangeDetectorRef,
@@ -116,16 +118,13 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       role: '',
       content: '',
       isText: false,
-      isImage: false,
+      isFile: false,
       date_time: ''
     };
   }
 
   ngOnInit(): void {
     console.log("ngOnInit called");
-    // this.chatAIService.getUsers().then(users => {
-    //   console.log("Fetched users:", users);
-    // });
 
     // const storedId = sessionStorage.getItem('generated_id');
     // get id from path url
@@ -135,24 +134,23 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
     const lastSegment = pathSegments[pathSegments.length - 1];
     console.log('Last Segment:', lastSegment);
 
-    const chatIdSegment = pathSegments.find(segment => segment.startsWith('chat'));
+    const chatIdSegment = pathSegments.find(segment => segment.startsWith('rag'));
     console.log('Chat ID Segment:', chatIdSegment);
 
-    if (lastSegment != 'chat') {
-      this.path = `/chat/${lastSegment}`;
+    if (lastSegment != 'rag') {
+      this.path = `/rag/${lastSegment}`;
       this.sessionId = lastSegment;
     } else {
       const generatedId = this.generateId();
       sessionStorage.setItem('generated_id', generatedId);
       this.sessionId = generatedId;
-      this.path = `/chat/${generatedId}`;
+      this.path = `/rag/${generatedId}`;
 
     }
     console.log('Chat path:', this.path);
 
     this.getUserChatHistory();
 
-    const text = "You are a helpful, intelligent, and professional AI assistant 🤖.\nYour primary goal is to understand and respond to user input clearly, accurately, and efficiently.\n\nPlease follow these core principles:\n\n    - 💬 Respond in a friendly, respectful, and professional tone at all times.\n**Format Requirements:** - Always respond in **Markdown format** for clarity and structure\n - 😀 Include **emojis** where appropriate to enhance tone and engagement.";
 
     this.payLoadMessages = {
       session_id: this.sessionId,
@@ -161,7 +159,7 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       role: 'user',
       content: "",
       isText: true,
-      isImage: false,
+      isFile: false,
       date_time: new Date().toISOString()
     };
     this.isSidebarVisible = JSON.parse(localStorage.getItem('sidebarClosed') || 'false');
@@ -173,7 +171,7 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
     });
     this.sharedService.createNewChat$?.subscribe(() => {
       if (this.messages.length > 0) {
-        this.location.go('/chat');
+        this.location.go('/rag');
 
         this.messages = [];
         this.prompt = '';
@@ -182,7 +180,7 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
         this.scrollToBottom();
 
         this.sessionId = this.generateId();
-        this.path = `/chat/${this.sessionId}`;
+        this.path = `/rag/${this.sessionId}`;
         sessionStorage.setItem('generated_id', this.sessionId);
 
         this.payLoadMessages = {
@@ -192,14 +190,14 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
           role: 'user',
           content: "",
           isText: true,
-          isImage: false,
+          isFile: false,
           date_time: new Date().toISOString()
         };
       }
 
     });
     this.sharedService.sessionSelected$.subscribe(sessionId => {
-      this.setPathFromSidebar(`/chat/${sessionId}`);
+      this.setPathFromSidebar(`/rag/${sessionId}`);
     });
   }
   ngAfterViewInit(): void {
@@ -234,33 +232,33 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
   getUserChatHistory() {
     console.log("Session Id: ",this.sessionId);
 
-    this.chatAIService.getUserChatHistory(this.sessionId.split('/').pop()).then(chatHistory => {
-      console.log("Fetched chat history:", chatHistory);
-      this.messages = [];
-      if (chatHistory.history && Array.isArray(chatHistory.history)) {
-        chatHistory.history.forEach((message: any) => {
-          this.messages.push({
-            role: message.role,
-            content: message.content.replace(/\\n/g, '\n'),
-            isText: true,
-            isImage: false,
-            isAttachment: false,
-            filesData: {
-              data: [],
-              totalCount: 0,
-              otherFileData: []
-            },
-            isCompleted: message.role === 'user' ? false : true
-          });
-          // this.payLoadMessages.messages.push({ role: message.role, content: message.content });
-        });
-        console.log("Messages Size:", this.messages.length);
+    // this.ragService.getUserChatHistory(this.sessionId.split('/').pop()).then(chatHistory => {
+    //   console.log("Fetched chat history:", chatHistory);
+    //   this.messages = [];
+    //   if (chatHistory.history && Array.isArray(chatHistory.history)) {
+    //     chatHistory.history.forEach((message: any) => {
+    //       this.messages.push({
+    //         role: message.role,
+    //         content: message.content.replace(/\\n/g, '\n'),
+    //         isText: true,
+    //         isImage: false,
+    //         isAttachment: false,
+    //         filesData: {
+    //           data: [],
+    //           totalCount: 0,
+    //           otherFileData: []
+    //         },
+    //         isCompleted: message.role === 'user' ? false : true
+    //       });
+    //       // this.payLoadMessages.messages.push({ role: message.role, content: message.content });
+    //     });
+    //     console.log("Messages Size:", this.messages.length);
 
-        this.isTileSaved = chatHistory.history.length >= 4;
-        console.log("Is Title Saved:", this.isTileSaved);
+    //     this.isTileSaved = chatHistory.history.length >= 4;
+    //     console.log("Is Title Saved:", this.isTileSaved);
 
-      }
-    });
+    //   }
+    // });
   }
   onScroll(event: Event): void {
     const element = event.target as HTMLElement;
@@ -275,17 +273,6 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       console.error(err);
     }
   }
-  saveChat(role: string, content: string, isText: boolean, isImage: boolean): void {
-    const chat = {
-      session_id: this.path.substring(6),
-      request_id: this.generateId(),
-      uuid: this.user?.uuid || '',
-      role,
-      content,
-      isText,
-      isImage
-    };
-  }
   async saveTitle(title: any): Promise<void> {
     const chatHistory = {
       session_id: this.path.substring(6),
@@ -296,28 +283,49 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
   async askGPT(): Promise<void> {
     const trimmedPrompt = this.prompt.trim();
     const hasPrompt = !!trimmedPrompt;
-    const hasFiles = this.filesData.some(file => file.value.trim());
-    if (!hasPrompt && !hasFiles) return;
-    this.isProgress = true;
-    let userPrompt = '';
-    if (hasPrompt) userPrompt += trimmedPrompt + '\n';
-    let fullText = '';
-    if (hasFiles) {
-      this.filesData.forEach(file => {
-        const value = file.value.trim();
-        if (value) fullText += value + '\n';
-      });
-      userPrompt += fullText;
+    console.log("Has Prompt: ", hasPrompt);
+    
+    const hasFiles = this.filesData.length > 0;
+    console.log("Has Files: ", hasFiles);
+    console.log("Files Data: ", this.filesData);
+    
+    if (!hasPrompt && !hasFiles) {
+      console.warn("No prompt or files provided");
+      return;
     }
-    userPrompt = userPrompt.trim();
-    console.log('%c[askGPT] Final Prompt:', 'color: blue;', userPrompt);
-    const isAttachment = hasFiles;
+
+    // Prepare the message payload
+    this.payLoadMessages.content = trimmedPrompt;
+    this.payLoadMessages.request_id = this.snowflake.nextId().toString();
+    this.payLoadMessages.isText = hasPrompt;
+    this.payLoadMessages.isFile = hasFiles;
+    
+    console.log('Payload Messages:', this.payLoadMessages);
+    
+    // Create FormData for multipart/form-data request
+    const payloadData = new FormData();
+    
+    // Add message as JSON string (backend expects this)
+    payloadData.append('message', JSON.stringify(this.payLoadMessages));
+    
+    // Add file if present (backend expects exactly one file)
+    if (hasFiles && this.filesData.length > 0) {
+      const fileData = this.filesData[0]; // Take first file for now
+      if (fileData.file instanceof File) {
+        payloadData.append('file', fileData.file, fileData.file.name);
+        console.log('Appended file:', fileData.file.name, 'Type:', fileData.file.type, 'Size:', fileData.file.size);
+      } else {
+        console.error('Invalid file data:', fileData);
+      }
+    }
+    
+    // Create user message for UI
     const userMessage: Message = {
       role: 'user',
-      content: isAttachment ? '' : userPrompt,
+      content: hasFiles ? trimmedPrompt : trimmedPrompt,
       isText: true,
       isImage: false,
-      isAttachment,
+      isAttachment: hasFiles,
       filesData: {
         data: [],
         totalCount: 0,
@@ -325,7 +333,8 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       },
       isCompleted: false
     };
-    if (isAttachment) {
+
+    if (hasFiles) {
       const processed = this.processFilesData(this.filesData);
       userMessage.filesData = {
         data: processed.filesData.data,
@@ -333,18 +342,23 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
         otherFileData: processed.otherFileData
       };
     }
+
     this.messages.push(userMessage);
+    
+    this.isProgress = true;
+    console.log('%c[askGPT] Sending request with FormData', 'color: blue;');
+    
+    // Clear input fields
     this.prompt = '';
     this.filesData = [];
-    this.payLoadMessages.content = userPrompt;
-    this.payLoadMessages.request_id = this.snowflake.nextId().toString();
-    console.log('Payload Messages:', this.payLoadMessages);
+
+    // Add assistant message placeholder
     this.messages.push({
       role: 'assistant',
       content: '',
       isText: true,
       isImage: false,
-      isAttachment: isAttachment,
+      isAttachment: false,
       filesData: {
         data: [],
         totalCount: 0,
@@ -355,35 +369,36 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
     try {
       this.isProgress = true;
       this.isTyping = true;
-      this.chatAIService.streamChat(
-        this.payLoadMessages,
+      this.ragService.streamRagChat(
+        payloadData,
         (chunk) => {
+          this.isRagInitialState = false;
           // Hide typing indicator once we start receiving content
           this.isTyping = false;
           // Append chunk to last assistant message
-          const lastMessage : any = this.messages[this.messages.length - 1];
-          if (!lastMessage.content) lastMessage.content = '';
-          
-          // Ensure proper markdown formatting is preserved when appending chunks
-          lastMessage.content += chunk;
-          lastMessage.content = lastMessage.content.replace(/\\n/g, '\n');
-          this.cdr.detectChanges();
+          const lastMessage = this.messages[this.messages.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            lastMessage.content += chunk;
+            this.cdr.detectChanges();
+          }
         },
         (err) => {
-          console.error('Streaming error:', err);
+          console.error('[askGPT] Stream error:', err);
           this.isProgress = false;
           this.isTyping = false;
         },
         () => {
-          console.log('Stream complete'); // Handle stream completion here
-          // log the last message from messages
+          console.log('[askGPT] Stream completed');
           const lastMessage = this.messages[this.messages.length - 1];
-          console.log('Last Message:', lastMessage);
-          lastMessage.isCompleted = true; // Update message state
-          this.isProgress = false; // Update UI state
-          this.isTyping = false; // Ensure typing indicator is hidden
-          if (this.messages.length < 3 && !this.isTileSaved) {
-            // Handle case where there are less than 3 messages
+          if (lastMessage && lastMessage.role === 'assistant') {
+            lastMessage.isCompleted = true;
+          }
+          this.isProgress = false;
+          this.isTyping = false;
+          this.cdr.detectChanges();
+
+          // Save title if needed (after first user-assistant exchange)
+          if (!this.isTileSaved && this.messages.length >= 2) {
             const chatHistory = this.messages.map(msg => ({
               role: msg.role,
               content: msg.content
@@ -394,12 +409,12 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
             };
             console.log("Payload ", payload);
 
-            this.chatAIService.saveChatHistory(payload).subscribe(
+            this.ragService.saveChatHistory(payload).subscribe(
               (res: any) => {
                 if (res.success == "true") {
                   this.isTileSaved = true;
                   if (res.title && res.title !== 'already_exists') {
-                    const render = '/chat/' + this.sessionId;
+                    const render = '/rag/' + this.sessionId;
                     console.log("Render Path:", render);
                     this.location.go(render);
                     this.sharedService.triggerSidebarChatHistoryUpdate();
@@ -415,6 +430,7 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
           }
         }
       );
+
 
 
       console.log('Streaming started with payload:', this.messages);
@@ -435,7 +451,6 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
         isCompleted: true
       };
       this.messages.push(errorMessage);
-      this.saveChat('assistant', errorMessage.content, true, false);
     } finally {
       this.isProgress = false;
     }
@@ -459,96 +474,13 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       this.filesData.splice(index, 1);
     }
     console.log(this.filesData);
-    this.docValue = "";
-    this.pdfValue = "";
-    this.imageValue = "";
     this.autoResizeTextarea(this.autoTextarea.nativeElement);
-    await this.getAttachmentValue();
-    const fullText = this.docValue + "\n" + this.pdfValue + "\n" + this.imageValue;
-    console.log("Full Text:", fullText);
   }
   async onFileSelected(event: any) {
     const files: FileList = event.target.files;
     this.autoResizeTextarea(this.autoTextarea.nativeElement);
     if (files && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        let previewUrl = '';
-        if (file.type.startsWith('image/')) {
-          previewUrl = URL.createObjectURL(file);
-        }
-        this.filesData.push({
-          file: file,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-          previewUrl,
-          value: ''
-        });
-      }
-      this.autoResizeTextarea(this.autoTextarea.nativeElement);
-    }
-    await this.getAttachmentValue();
-    const fullText = this.docValue + "\n" + this.pdfValue + "\n" + this.imageValue;
-    console.log("Full Text:", fullText);
-  }
-  async getAttachmentValue() {
-    this.docValue = "";
-    this.pdfValue = "";
-    this.imageValue = "";
-    if (this.filesData && this.filesData.length > 0) {
-      for (let i = 0; i < this.filesData.length; i++) {
-        const file = this.filesData[i].file;
-        if (file.type.startsWith('image/') && this.filesData[i].value === '') {
-          // const base64 = await this.convertFileToBase64(file);
-          // let imageValue = "Image: \n\n" + await puter.ai.img2txt(base64);
-          // imageValue = imageValue.replace(/^\s*[\r\n]/gm, '');
-          // this.filesData[i].value = imageValue;
-          // console.log("Image Value:", imageValue);
-        }
-        if (file && file.name.endsWith('.docx') && this.filesData[i].value === '') {
-          const reader = new FileReader();
-          reader.onload = async (e: any) => {
-            const arrayBuffer = e.target.result;
-            mammoth.extractRawText({ arrayBuffer })
-              .then(result => {
-                let docValue = "Document Name: " + file.name + "\n\n" + result.value;
-                docValue = docValue.replace(/^\s*[\r\n]/gm, '');
-                this.filesData[i].value = docValue;
-                console.log("Document Value:", docValue);
-              })
-              .catch(err => {
-                console.error('Error reading docx:', err);
-              });
-          };
-          reader.readAsArrayBuffer(file);
-        }
-        if (file && file.type === 'application/pdf' && this.filesData[i].value === '') {
-          const reader = new FileReader();
-          reader.onload = async (e: any) => {
-            const typedArray = new Uint8Array(e.target.result);
-            // try {
-            //   const pdf = await pdfjsLib.getDocument(typedArray).promise;
-            //   let textContent = '';
-            //   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            //     const page = await pdf.getPage(pageNum);
-            //     const content = await page.getTextContent();
-            //     const pageText = content.items.map((item: any) => item.str).join(' ');
-            //     textContent += pageText + '\n';
-            //   }
-            //   let pdfValue = "Pdf Name: " + file.name + "\n\n" + textContent;
-            //   pdfValue = pdfValue.replace(/^\s*[\r\n]/gm, '');
-            //   this.filesData[i].value = pdfValue;
-            //   console.log("PDF Value:", pdfValue);
-            // } catch (error) {
-            //   console.error('Error reading PDF:', error);
-            // }
-          };
-          reader.readAsArrayBuffer(file);
-        } else {
-        }
-      }
+      await this.handleFileSelection(files);
     }
   }
   async handleSubmit(): Promise<void> {
@@ -568,8 +500,8 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       const body = {
         "input": "Sure! Here’s a comprehensive Markdown example that covers most common Markdown styles and elements, with explanations inline as comments (using HTML comments so they don’t show in rendered Markdown):\n\n# Heading 1\n## Heading 2\n### Heading 3\n#### Heading 4\n##### Heading 5\n###### Heading 6\n\n---\n\n**Bold text**  \n*Italic text*  \n***Bold and italic text***  \n~~Strikethrough~~\n\n> This is a blockquote.  \n> It can span multiple lines.\n\n---\n\n### Lists\n\n**Unordered list:**\n\n- Item 1  \n- Item 2  \n  - Nested item 2a  \n  - Nested item 2b  \n\n**Ordered list:**\n\n1. First item  \n2. Second item  \n   1. Nested item 2.1  \n   2. Nested item 2.2  \n\n---\n\n### Code\n\nInline code: `console.log('Hello, world!')`\n\nCode block (with syntax highlighting for JavaScript):\n\n```javascript\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\nconsole.log(greet('Alice'));\n````\n\n---\n\n### Links and Images\n\n[OpenAI website](https://www.openai.com)\n\n![OpenAI Logo](https://upload.wikimedia.org/wikipedia/commons/6/6e/OpenAI_Logo.svg \"OpenAI Logo\")\n\n---\n\n### Tables\n\n| Syntax   | Description         | Example |\n| -------- | ------------------- | ------- |\n| Header   | Title of the column | Content |\n| **Bold** | *Italic* text       | `Code`  |\n\n---\n\n### Horizontal Rule\n\n---\n\n### Task List\n\n* [x] Write Markdown example\n* [ ] Add more examples\n* [ ] Review formatting\n\n---\n\n### Emoji\n\nHere is a smiley 🙂 and a thumbs up 👍\n\n---\n\n### Footnotes\n\nHere is a sentence with a footnote.[^1]\n\n[^1]: This is the footnote text.\n\n---\n\n### Definition List (not supported in all Markdown flavors)\n\nTerm 1\n: Definition 1\n\nTerm 2\n: Definition 2\n\n---\n\n### HTML inside Markdown\n\nYou can also use **HTML** tags like this:\n\n<div style=\"color: red;\">This text is red</div>\n\n---\n\n### Escaping characters\n\nUse a backslash to escape special characters: \\*not italic\\* and # not a heading\n\n```\n\nIf you want me to customize or add anything else, just ask!\n```"
       };
-      const blob = await this.chatAIService.convertMarkdownToDocx(body.input);
-      saveAs(blob, `chat-message-${Date.now()}.docx`);
+      // const blob = await this.ragService.convertMarkdownToDocx(body.input);
+      // saveAs(blob, `chat-message-${Date.now()}.docx`);
     } catch (error) {
       console.error('Error downloading DOCX:', error);
       // Handle error (show toast, etc.)
@@ -707,5 +639,57 @@ export class ChatAIComponent implements AfterViewInit, OnInit, AfterViewChecked,
       }
       document.body.removeChild(textarea);
     }
+  }
+
+  // Drag and Drop functionality
+  @HostListener('dragover', ['$event'])
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  @HostListener('dragleave', ['$event'])
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+    
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.handleFileSelection(files);
+    }
+  }
+
+  private async handleFileSelection(files: FileList): Promise<void> {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file: file,
+        value: '',
+        previewUrl: ''
+      };
+      if (file.type.startsWith('image/')) {
+        fileData.previewUrl = URL.createObjectURL(file);
+      }
+
+      try {
+        fileData.value = await this.convertFileToBase64(file);
+        this.filesData.push(fileData);
+      } catch (error) {
+        console.error('Error processing file:', error);
+      }
+    }
+    this.autoResizeTextarea(this.autoTextarea.nativeElement);
   }
 }

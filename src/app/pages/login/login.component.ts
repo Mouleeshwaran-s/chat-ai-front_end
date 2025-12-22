@@ -22,6 +22,7 @@ export class LoginComponent implements OnInit {
   private notificationTimeout: any;
 
   showPassword = false;
+  isLoading = false;
 
   constructor(private fb: FormBuilder, private loginService: AuthService, private router: Router, private shared: SharedService) { }
 
@@ -89,14 +90,19 @@ export class LoginComponent implements OnInit {
     } else if (!password) {
       this.showToast('Please enter your password.', 'warning');
     } else {
+      // Set loading state to true
+      this.isLoading = true;
+      
       this.loginService.login({ email: email, password }).subscribe({
         next: (response) => {
+          this.isLoading = false; // Stop loading
           this.showToast('Login successful!', 'success');
           setTimeout(() => {
             this.router.navigate(['/chat']);
-          }, 3000); // Redirect after 1 second
+          }, 3000); // Redirect after 3 seconds
         },
         error: (error) => {
+          this.isLoading = false; // Stop loading
           this.showToast('Invalid credentials. Please try again.', 'error');
         }
       });

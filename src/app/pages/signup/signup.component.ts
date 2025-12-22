@@ -20,6 +20,7 @@ export class SignupComponent implements OnInit {
   private notificationTimeout: any;
 
   showPassword = false;
+  isLoading = false;
 
   constructor(private fb: FormBuilder, private signUpService: AuthService, private router: Router) { }
 
@@ -69,19 +70,38 @@ export class SignupComponent implements OnInit {
     } else if (!password) {
       this.showToast('Please enter your password.', 'warning');
     } else {
-      this.showToast('Account created successfully!', 'success');
+      // Set loading state to true
+      this.isLoading = true;
+      
+      // Make the API call without showing premature success message
       this.signUpService.signUp({ username: name, email, password }).subscribe({
         next: (response) => {
-          this.showToast('Signup successful!', 'success');
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 2000); // Redirect after 3 seconds
+          this.isLoading = false; // Stop loading
+          
+          // check for response status code 200
+          if (response.msg == "User registered successfully") {
+            this.showToast('Account created successfully!', 'success');
+            setTimeout(() => {
+              this.router.navigate(['/login']);
+            }, 2000); // Redirect after 2 seconds
+          }else {
+            this.showToast('Signup failed. Please try again.', 'error');
+          }
         },
         error: (error) => {
-          console.log(error.message);
+          this.isLoading = false; // Stop loading
+          
+          console.log(error);
           console.log(error.status);
-
-          // this.showToast('Invalid credentials. Please try again.', 'error');
+          
+          // Show appropriate error message based on status code
+          if (error.status === 400) {
+            this.showToast(error.error, 'error');
+          } else if (error.status === 409) {
+            this.showToast('Email already exists. Please use a different email.', 'error');
+          } else {
+            this.showToast('Signup failed. Please try again.', 'error');
+          }
         }
       });
       // Here you would handle actual signup logic

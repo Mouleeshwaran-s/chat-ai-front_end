@@ -1,6 +1,6 @@
 <div class="chat-ai-container">
     <aside>
-        <app-sidebar></app-sidebar>
+        <!-- <app-sidebar></app-sidebar> -->
     </aside>
     <div class="wrapper">
         <header>
@@ -132,7 +132,15 @@
                                 </div>
                             </ng-container>
                             <ng-container *ngIf="message.role === 'assistant'">
-                                <markdown clipboard class="bot-msg" [data]="message.content"></markdown>
+                                <!-- Typing indicator shown when waiting for response -->
+                                <div *ngIf="isTyping && !message.content && !message.isCompleted" class="typing-indicator">
+                                    <div class="typing">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                                <markdown *ngIf="message.content" clipboard class="bot-msg" [data]="message.content"></markdown>
                                 <div *ngIf="message.isCompleted" class="action-bar">
                                     <button (click)="copyToClipboard(message.content,i)">
                                         <ng-container *ngIf="copiedMessageIndex === i; else copyIcon">
@@ -174,13 +182,6 @@
                                 <img [src]="message.content" alt="Generated Image" />
                             </div>
                         </ng-container>
-                    </div>
-                    <div *ngIf="isProgress" class="item">
-                        <div class="typing">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -274,28 +275,9 @@
                     </div>
                 </ng-container>
                 <div class="textarea-wrapper">
-                    <textarea #autoTextarea type="text" (input)="autoResizeTextarea(autoTextarea); getPromptToStore()"
+                    <textarea #autoTextarea type="text" id="text-area" (input)="autoResizeTextarea(autoTextarea); getPromptToStore()"
                         (keydown)="handleKeyboardEvent($event)" [(ngModel)]="prompt" placeholder="Ask anything">
-                            </textarea>
-                </div>
-                <div class="action-tab">
-                    <div class="left-action">
-                        <button (click)="triggerFileInput()" class="chat-btn attach">
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-                                xmlns="http://www.w3.org/2000/svg" aria-label="" class="icon-md">
-                                <path
-                                    d="M8.25 15.75V9.75H2.25C1.83579 9.75 1.5 9.41421 1.5 9C1.5 8.58579 1.83579 8.25 2.25 8.25H8.25V2.25C8.25 1.83579 8.58579 1.5 9 1.5C9.41421 1.5 9.75 1.83579 9.75 2.25V8.25H15.75L15.8271 8.25391C16.2051 8.29253 16.5 8.61183 16.5 9C16.5 9.38817 16.2051 9.70747 15.8271 9.74609L15.75 9.75H9.75V15.75C9.75 16.1642 9.41421 16.5 9 16.5C8.58579 16.5 8.25 16.1642 8.25 15.75Z"
-                                    fill="currentColor"></path>
-                            </svg>
-                        </button>
-                        <input type="file" #fileInput
-                            accept="video/mp4,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*"
-                            style="display: none;" multiple (change)="onFileSelected($event)" />
-                        <!-- <select name="model" [formControl]="selectedModel" id="model">
-                                <option *ngFor="let model of models" [value]="model.value">{{ model.viewValue }}
-                                </option>
-                            </select> -->
-                    </div>
+                    </textarea>
                     <button class="chat-btn send" [disabled]="isProgress && (!prompt.length || !filesData.length)"
                         (click)="handleSubmit()">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"
